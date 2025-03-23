@@ -53,7 +53,7 @@ jobs:
           CIBW_BEFORE_BUILD: |
             pip install setuptools wheel
             if [ "$(uname)" == "Linux" ]; then
-                sudo apt-get update && sudo apt-get install -y wget swig zlib1g-dev libbz2-dev liblzma-dev
+                yum install -y wget swig zlib-devel bzip2-devel xz-devel || apt-get update && apt-get install -y wget swig zlib1g-dev libbz2-dev liblzma-dev
             elif [ "$(uname)" == "Darwin" ]; then
                 brew install wget swig
             elif [ "$(uname)" == "Windows_NT" ]; then
