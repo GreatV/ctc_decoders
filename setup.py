@@ -72,6 +72,10 @@ def parallelCCompile(
 
 
 def compile_test(header, library):
+    if platform.system() == "Windows":
+        # Skip compile tests on Windows as they're not needed and use bash
+        return False
+    
     dummy_path = os.path.join(os.path.dirname(__file__), "dummy")
     command = (
         'bash -c "g++ -include '
@@ -104,29 +108,35 @@ FILES = [
                                or fn.endswith('unittest.cc'))
 ]
 # yapf: enable
-LIBS = ["stdc++"]
-if platform.system() != "Darwin":
-    LIBS.append("rt")
+
+# Platform-specific configuration
 if platform.system() == "Windows":
-    LIBS = ["-static-libstdc++"]
-
-ARGS = ["-O3", "-DNDEBUG", "-DKENLM_MAX_ORDER=6", "-std=c++11"]
-
-# Add -Wno-sign-compare for macOS to prevent warnings treated as errors
-if platform.system() == "Darwin":
-    ARGS.append("-Wno-sign-compare")
-
-if compile_test("zlib.h", "z"):
-    ARGS.append("-DHAVE_ZLIB")
-    LIBS.append("z")
-
-if compile_test("bzlib.h", "bz2"):
-    ARGS.append("-DHAVE_BZLIB")
-    LIBS.append("bz2")
-
-if compile_test("lzma.h", "lzma"):
-    ARGS.append("-DHAVE_XZLIB")
-    LIBS.append("lzma")
+    # MSVC-specific flags
+    ARGS = ["/O2", "/DNDEBUG", "/DKENLM_MAX_ORDER=6", "/EHsc", "/D_USE_MATH_DEFINES", "/DNOMINMAX"]
+    LIBS = []  # No need for libs on Windows with MSVC
+else:
+    # Unix-like flags
+    LIBS = ["stdc++"]
+    if platform.system() != "Darwin":
+        LIBS.append("rt")
+    
+    ARGS = ["-O3", "-DNDEBUG", "-DKENLM_MAX_ORDER=6", "-std=c++11"]
+    
+    if platform.system() == "Darwin":
+        ARGS.append("-Wno-sign-compare")
+    
+    # Unix-specific library checks
+    if compile_test("zlib.h", "z"):
+        ARGS.append("-DHAVE_ZLIB")
+        LIBS.append("z")
+    
+    if compile_test("bzlib.h", "bz2"):
+        ARGS.append("-DHAVE_BZLIB")
+        LIBS.append("bz2")
+    
+    if compile_test("lzma.h", "lzma"):
+        ARGS.append("-DHAVE_XZLIB")
+        LIBS.append("lzma")
 
 os.system("swig -python -c++ ./decoders.i")
 
