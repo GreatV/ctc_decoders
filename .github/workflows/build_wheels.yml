@@ -18,17 +18,17 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
       - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.16.2
+        run: python -m pip install cibuildwheel==2.23.1
 
       - name: Install Linux Dependencies
         if: runner.os == 'Linux'
@@ -53,7 +53,7 @@ jobs:
           CIBW_BEFORE_BUILD: |
             pip install setuptools wheel
             if [ "$(uname)" == "Linux" ]; then
-                yum update -y && yum install -y wget swig zlib-devel bzip2-devel xz-devel || apt-get update && apt-get install -y wget swig zlib1g-dev libbz2-dev liblzma-dev
+                yum update -y && yum install -y wget swig zlib-devel bzip2-devel xz-devel
             elif [ "$(uname)" == "Darwin" ]; then
                 brew install wget swig
             elif [ "$(uname)" == "Windows_NT" ]; then
@@ -86,6 +86,6 @@ jobs:
           merge-multiple: true
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.8.10
+        uses: pypa/gh-action-pypi-publish@v1.8.11
         with:
           password: ${{ secrets.PYPI_API_TOKEN }} 
