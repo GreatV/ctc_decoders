@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "swig"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "paddlespeech_ctcdecoders"
+version = "0.2.2"
+description = "CTC decoders in paddlespeech"
+authors = [
+    {name = "PaddlePaddle Speech and Language Team", email = "paddlesl@baidu.com"}
+]
+license-files = ["LICENSE", "COPYING.APACHE2.0", "COPYING.LESSER.3"]
+urls = {Homepage = "https://github.com/PaddlePaddle/PaddleSpeech"}
+
+[tool.setuptools]
+py-modules = ["paddlespeech_ctcdecoders"]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+exclude = ["dist", "build", "*.egg-info"]
+
+[tool.setuptools.package-data]
+"*" = ["*.i", "*.h", "*.cpp", "*.cxx"]
+
+[tool.sdist]
+formats = ["gztar"]

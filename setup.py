@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Script to build and install decoder package."""
+
 import argparse
 import glob
 import multiprocessing.pool
@@ -29,7 +30,8 @@ parser.add_argument(
     "--num_processes",
     default=1,
     type=int,
-    help="Number of cpu processes to build package. (default: %(default)d)")
+    help="Number of cpu processes to build package. (default: %(default)d)",
+)
 args = parser.parse_known_args()
 
 # reconstruct sys.argv to pass to setup below
@@ -38,18 +40,21 @@ sys.argv = [sys.argv[0]] + args[1]
 
 # monkey-patch for parallel compilation
 # See: https://stackoverflow.com/a/13176803
-def parallelCCompile(self,
-                     sources,
-                     output_dir=None,
-                     macros=None,
-                     include_dirs=None,
-                     debug=0,
-                     extra_preargs=None,
-                     extra_postargs=None,
-                     depends=None):
+def parallelCCompile(
+    self,
+    sources,
+    output_dir=None,
+    macros=None,
+    include_dirs=None,
+    debug=0,
+    extra_preargs=None,
+    extra_postargs=None,
+    depends=None,
+):
     # those lines are copied from distutils.ccompiler.CCompiler directly
     macros, objects, extra_postargs, pp_opts, build = self._setup_compile(
-        output_dir, macros, include_dirs, sources, depends, extra_postargs)
+        output_dir, macros, include_dirs, sources, depends, extra_postargs
+    )
     cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
 
     # parallel code
@@ -67,22 +72,35 @@ def parallelCCompile(self,
 
 
 def compile_test(header, library):
+    if platform.system() == "Windows":
+        # Skip compile tests on Windows as they're not needed and use bash
+        return True
+    
     dummy_path = os.path.join(os.path.dirname(__file__), "dummy")
-    command = "bash -c \"g++ -include " + header \
-        + " -l" + library + " -x c++ - <<<'int main() {}' -o " \
-        + dummy_path + " >/dev/null 2>/dev/null && rm " \
-        + dummy_path + " 2>/dev/null\""
+    command = (
+        'bash -c "g++ -include '
+        + header
+        + " -l"
+        + library
+        + " -x c++ - <<<'int main() {}' -o "
+        + dummy_path
+        + " >/dev/null 2>/dev/null && rm "
+        + dummy_path
+        + ' 2>/dev/null"'
+    )
     return os.system(command) == 0
 
 
 # hack compile to support parallel compiling
 ccompiler.CCompiler.compile = parallelCCompile
 
-FILES = glob.glob('kenlm/util/*.cc') \
-    + glob.glob('kenlm/lm/*.cc') \
-    + glob.glob('kenlm/util/double-conversion/*.cc')
+FILES = (
+    glob.glob("kenlm/util/*.cc")
+    + glob.glob("kenlm/lm/*.cc")
+    + glob.glob("kenlm/util/double-conversion/*.cc")
+)
 
-FILES += glob.glob('openfst-1.6.3/src/lib/*.cc')
+FILES += glob.glob("openfst-1.6.3/src/lib/*.cc")
 
 # yapf: disable
 FILES = [
@@ -90,50 +108,52 @@ FILES = [
                                or fn.endswith('unittest.cc'))
 ]
 # yapf: enable
-LIBS = ['stdc++']
-if platform.system() != 'Darwin':
-    LIBS.append('rt')
-if platform.system() == 'Windows':
-    LIBS = ['-static-libstdc++']
 
-ARGS = ['-O3', '-DNDEBUG', '-DKENLM_MAX_ORDER=6', '-std=c++11']
+# Platform-specific configuration
+if platform.system() == "Windows":
+    # MSVC-specific flags
+    ARGS = ["/O2", "/DNDEBUG", "/DKENLM_MAX_ORDER=6", "/EHsc", "/D_USE_MATH_DEFINES", "/DNOMINMAX"]
+    LIBS = []  # No need for libs on Windows with MSVC
+else:
+    # Unix-like flags
+    LIBS = ["stdc++"]
+    if platform.system() != "Darwin":
+        LIBS.append("rt")
+    
+    ARGS = ["-O3", "-DNDEBUG", "-DKENLM_MAX_ORDER=6", "-std=c++11"]
+    
+    if platform.system() == "Darwin":
+        ARGS.append("-Wno-sign-compare")
+    
+    # Unix-specific library checks
+    if compile_test("zlib.h", "z"):
+        ARGS.append("-DHAVE_ZLIB")
+        LIBS.append("z")
+    
+    if compile_test("bzlib.h", "bz2"):
+        ARGS.append("-DHAVE_BZLIB")
+        LIBS.append("bz2")
+    
+    if compile_test("lzma.h", "lzma"):
+        ARGS.append("-DHAVE_XZLIB")
+        LIBS.append("lzma")
 
-if compile_test('zlib.h', 'z'):
-    ARGS.append('-DHAVE_ZLIB')
-    LIBS.append('z')
-
-if compile_test('bzlib.h', 'bz2'):
-    ARGS.append('-DHAVE_BZLIB')
-    LIBS.append('bz2')
-
-if compile_test('lzma.h', 'lzma'):
-    ARGS.append('-DHAVE_XZLIB')
-    LIBS.append('lzma')
-
-os.system('swig -python -c++ ./decoders.i')
+os.system("swig -python -c++ ./decoders.i")
 
 decoders_module = [
     Extension(
-        name='_paddlespeech_ctcdecoders',
-        sources=FILES + glob.glob('*.cxx') + glob.glob('*.cpp'),
-        language='c++',
+        name="_paddlespeech_ctcdecoders",
+        sources=FILES + glob.glob("*.cxx") + glob.glob("*.cpp"),
+        language="c++",
         include_dirs=[
-            '.',
-            'kenlm',
-            'openfst-1.6.3/src/include',
-            'ThreadPool',
+            ".",
+            "kenlm",
+            "openfst-1.6.3/src/include",
+            "ThreadPool",
         ],
         libraries=LIBS,
-        extra_compile_args=ARGS)
+        extra_compile_args=ARGS,
+    )
 ]
 
-setup(
-    name='paddlespeech_ctcdecoders',
-    version='0.2.2',
-    description="CTC decoders in paddlespeech",
-    author="PaddlePaddle Speech and Language Team",
-    author_email="paddlesl@baidu.com",
-    url="https://github.com/PaddlePaddle/PaddleSpeech",
-    license='Apache 2.0, GNU Lesser General Public License v3 (LGPLv3) (LGPL-3)',
-    ext_modules=decoders_module,
-    py_modules=['paddlespeech_ctcdecoders'])
+setup(ext_modules=decoders_module, py_modules=["paddlespeech_ctcdecoders"])
