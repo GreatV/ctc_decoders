@@ -44,7 +44,7 @@ jobs:
       - name: Install Windows Dependencies
         if: runner.os == 'Windows'
         run: |
-          choco install swig wget
+          choco install swig wget git 7zip -y
 
       - name: Build wheels
         env:
@@ -60,7 +60,7 @@ jobs:
                 brew install wget swig
                 bash setup.sh
             elif [ "$(uname)" == "Windows_NT" ]; then
-                choco install wget swig -y
+                choco install wget swig git 7zip -y
                 cmd /c setup.bat
             fi
           CIBW_ARCHS_MACOS: "x86_64 arm64"
