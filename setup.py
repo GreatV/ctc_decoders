@@ -112,6 +112,10 @@ if platform.system() == "Windows":
 
 ARGS = ["-O3", "-DNDEBUG", "-DKENLM_MAX_ORDER=6", "-std=c++11"]
 
+# Add -Wno-sign-compare for macOS to prevent warnings treated as errors
+if platform.system() == "Darwin":
+    ARGS.append("-Wno-sign-compare")
+
 if compile_test("zlib.h", "z"):
     ARGS.append("-DHAVE_ZLIB")
     LIBS.append("z")
