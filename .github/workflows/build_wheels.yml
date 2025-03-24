@@ -25,7 +25,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
       - name: Install cibuildwheel
         run: python -m pip install cibuildwheel==2.23.1
@@ -53,13 +53,16 @@ jobs:
           CIBW_BEFORE_BUILD: |
             pip install setuptools wheel
             if [ "$(uname)" == "Linux" ]; then
-                yum update -y && yum install -y wget swig zlib-devel bzip2-devel xz-devel
+                yum update -y
+                yum install -y wget swig zlib-devel bzip2-devel xz-devel
+                bash setup.sh
             elif [ "$(uname)" == "Darwin" ]; then
                 brew install wget swig
+                bash setup.sh
             elif [ "$(uname)" == "Windows_NT" ]; then
                 choco install wget swig -y
+                cmd /c setup.bat
             fi
-            bash setup.sh
           CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_ARCHS_LINUX: "x86_64"
           CIBW_ARCHS_WINDOWS: "AMD64"

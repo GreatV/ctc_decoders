@@ -74,7 +74,7 @@ def parallelCCompile(
 def compile_test(header, library):
     if platform.system() == "Windows":
         # Skip compile tests on Windows as they're not needed and use bash
-        return False
+        return True
     
     dummy_path = os.path.join(os.path.dirname(__file__), "dummy")
     command = (
