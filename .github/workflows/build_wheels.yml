@@ -48,7 +48,7 @@ jobs:
       - name: Install Windows Dependencies
         if: runner.os == 'Windows'
         run: |
-          choco install swig wget git 7zip -y
+          choco install swig wget 7zip -y
           pip install setuptools wheel
           cmd /c setup.bat
 

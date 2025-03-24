@@ -12,7 +12,7 @@ if not exist kenlm (
 
 if not exist openfst-1.6.3 (
     echo Downloading and extracting OpenFST...
-    powershell -Command "(New-Object System.Net.WebClient).DownloadFile('http://www.openfst.org/twiki/pub/FST/FstDownload/openfst-1.6.3.tar.gz', 'openfst-1.6.3.tar.gz')"
+    wget http://www.openfst.org/twiki/pub/FST/FstDownload/openfst-1.6.3.tar.gz
     echo Extracting OpenFST...
     
     :: Check for 7-Zip
