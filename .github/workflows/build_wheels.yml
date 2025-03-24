@@ -35,34 +35,27 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y zlib1g-dev libbz2-dev liblzma-dev swig wget
+          pip install setuptools wheel
+          bash setup.sh
 
       - name: Install macOS Dependencies
         if: runner.os == 'macOS'
         run: |
           brew install swig wget
+          pip install setuptools wheel
+          bash setup.sh
 
       - name: Install Windows Dependencies
         if: runner.os == 'Windows'
         run: |
           choco install swig wget git 7zip -y
+          pip install setuptools wheel
+          cmd /c setup.bat
 
       - name: Build wheels
         env:
           CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-*"
           CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux*"
-          CIBW_BEFORE_BUILD: |
-            pip install setuptools wheel
-            if [ "$(uname)" == "Linux" ]; then
-                yum update -y
-                yum install -y wget swig zlib-devel bzip2-devel xz-devel
-                bash setup.sh
-            elif [ "$(uname)" == "Darwin" ]; then
-                brew install wget swig
-                bash setup.sh
-            elif [ "$(uname)" == "Windows_NT" ]; then
-                choco install wget swig git 7zip -y
-                cmd /c setup.bat
-            fi
           CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_ARCHS_LINUX: "x86_64"
           CIBW_ARCHS_WINDOWS: "AMD64"
