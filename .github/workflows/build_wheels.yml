@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-13]
+        os: [ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -38,18 +38,11 @@ jobs:
           pip install setuptools wheel
           bash setup.sh
 
-      - name: Install macOS Dependencies
-        if: runner.os == 'macOS'
-        run: |
-          brew install swig wget
-          pip install setuptools wheel
-          bash setup.sh
 
       - name: Build wheels
         env:
           CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-*"
           CIBW_SKIP: "*-manylinux_i686 *-musllinux*"
-          CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_ARCHS_LINUX: "x86_64 aarch64"
           CIBW_TEST_SKIP: "*"
           CIBW_ENVIRONMENT_MACOS: "CFLAGS='-Wno-deprecated-declarations' CXXFLAGS='-Wno-deprecated-declarations'"
